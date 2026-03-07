@@ -1,0 +1,82 @@
+[
+  {
+    "query": "I need a Python script to take over an already logged-in Chrome window, open https://seller.example.com/orders, filter by date, click export, and download CSV to D:/tmp/orders with DrissionPage.",
+    "should_trigger": true
+  },
+  {
+    "query": "Please write DrissionPage automation for an admin site: search employee by keyword, open detail page, and extract phone number. The page uses iframe and my locator keeps failing.",
+    "should_trigger": true
+  },
+  {
+    "query": "Migrate my Selenium flow to DrissionPage: open Baidu, search 50 keywords, open top 3 results, capture screenshots, and save titles.",
+    "should_trigger": true
+  },
+  {
+    "query": "After I click a button, a new tab opens. I need to wait for that tab, fill a form there, submit, then switch back and continue. Give me a robust DrissionPage script.",
+    "should_trigger": true
+  },
+  {
+    "query": "How do I use DrissionPage network listener to capture XHR /api/report/list after clicking Query, then save response JSON locally?",
+    "should_trigger": true
+  },
+  {
+    "query": "Build a login automation script with DrissionPage: script fills username/password, I manually solve captcha, then script continues and downloads daily report.",
+    "should_trigger": true
+  },
+  {
+    "query": "Elements are not clickable in my browser automation. Give me a DrissionPage pattern with wait.ele_displayed, scroll to view, and retry logic.",
+    "should_trigger": true
+  },
+  {
+    "query": "I am building a Python RPA utility using Chromium tabs in parallel for ticket processing, file upload, and screenshot evidence. Please design with DrissionPage.",
+    "should_trigger": true
+  },
+  {
+    "query": "File upload via input[type=file] does not work on this site. Can DrissionPage actions simulate drag-in upload for C:/data/invoice.pdf?",
+    "should_trigger": true
+  },
+  {
+    "query": "Convert this Playwright logic to DrissionPage: navigate, click filter, wait list loaded, extract top 20 items.",
+    "should_trigger": true
+  },
+  {
+    "query": "I have a requests-based crawler and want async concurrency with aiohttp. No browser automation required.",
+    "should_trigger": false
+  },
+  {
+    "query": "Analyze this Chrome DevTools performance trace and explain LCP/INP issues with frontend optimization actions.",
+    "should_trigger": false
+  },
+  {
+    "query": "Help me build a pytest UI framework with Playwright fixtures and page objects. Do not switch libraries.",
+    "should_trigger": false
+  },
+  {
+    "query": "Please organize DrissionPage browser control docs into a learning outline. I do not need automation code.",
+    "should_trigger": false
+  },
+  {
+    "query": "For data extraction, the target site has public JSON APIs. Design an API-first collector without opening a browser.",
+    "should_trigger": false
+  },
+  {
+    "query": "I need a product demo video with slide transitions and voiceover automation. This is not web page control.",
+    "should_trigger": false
+  },
+  {
+    "query": "Tune Chrome startup flags to reduce memory and disable GPU, and explain trade-offs. No DrissionPage code needed.",
+    "should_trigger": false
+  },
+  {
+    "query": "My Selenium tests are flaky in CI. Help debug retries, test isolation, and waits, but keep Selenium for now.",
+    "should_trigger": false
+  },
+  {
+    "query": "Compare DrissionPage, Selenium, and Playwright with pros/cons and suggest a stack choice for my team.",
+    "should_trigger": false
+  },
+  {
+    "query": "Need desktop automation on Windows client app: click native buttons, read window text, and save logs. No browser pages.",
+    "should_trigger": false
+  }
+]

@@ -1,0 +1,82 @@
+[
+  {
+    "query": "我在做电商后台自动化，想用 Python 打开 Chrome 后接管已经登录的窗口，然后去 https://seller.example.com/orders 按日期筛选，点导出按钮下载 CSV。请直接给我 DrissionPage 脚本，下载到 D:/tmp/orders。",
+    "should_trigger": true
+  },
+  {
+    "query": "帮我写个网页自动化：先打开企业微信管理台，输入关键词搜索员工，再点进详情页抓手机号。页面里有 iframe，之前我总是定位不到。希望用 DrissionPage。",
+    "should_trigger": true
+  },
+  {
+    "query": "我不想再用 selenium 了，改成 DrissionPage 吧。需求是循环 50 个关键词去百度搜索，打开前3个结果页，截图保存并记录标题。",
+    "should_trigger": true
+  },
+  {
+    "query": "有个内网页面点击按钮会新开 tab，我需要等新标签出现后在新页填表提交，再切回原页面继续。给我一份稳定点的自动化脚本。",
+    "should_trigger": true
+  },
+  {
+    "query": "我要抓网页 XHR 接口返回，先点查询按钮，再监听 network 里 /api/report/list 这个请求，把 response 的 JSON 保存到本地。用 DrissionPage 怎么写？",
+    "should_trigger": true
+  },
+  {
+    "query": "请帮我写浏览器自动化登录脚本：验证码我手动输入，脚本只负责填账号密码、等我按回车后继续点击菜单并下载日报。",
+    "should_trigger": true
+  },
+  {
+    "query": "页面元素经常点不到，报错 element not interactable。你能给我一套 DrissionPage 的稳健写法吗？包括等待显示、滚动到可视区、重试。",
+    "should_trigger": true
+  },
+  {
+    "query": "公司要做一个 Python RPA 小工具，核心是控制 Chromium 多标签并行处理工单、上传附件、最后截图留痕。请给架构和关键代码。",
+    "should_trigger": true
+  },
+  {
+    "query": "我有个网页需要拖拽上传文件，普通 input[type=file] 不生效。可否用 DrissionPage 的动作链模拟拖入，上传 C:/data/invoice.pdf？",
+    "should_trigger": true
+  },
+  {
+    "query": "帮我把这段 Playwright 逻辑迁移成 DrissionPage：访问站点、点击筛选、等待列表加载、提取前20条文本。",
+    "should_trigger": true
+  },
+  {
+    "query": "我有个 requests 抓取脚本，想优化为并发异步请求，不需要打开浏览器。你帮我改成 aiohttp 版本。",
+    "should_trigger": false
+  },
+  {
+    "query": "请分析这段 Chrome DevTools Performance trace，重点看 LCP 和 INP 为什么差，给前端优化建议。",
+    "should_trigger": false
+  },
+  {
+    "query": "我在写 pytest UI 测试框架，继续沿用 Playwright fixture，不要换库。帮我补 page object 结构。",
+    "should_trigger": false
+  },
+  {
+    "query": "能不能帮我整理 DrissionPage 浏览器控制文档，做成中文教程大纲，不需要写自动化脚本。",
+    "should_trigger": false
+  },
+  {
+    "query": "我要做网站数据采集，但目标站点有公开 JSON API。优先走接口请求，不走浏览器渲染。请给采集方案。",
+    "should_trigger": false
+  },
+  {
+    "query": "我想录一段产品演示视频，要求自动切换 PPT、加转场和配音。这个和网页自动化无关。",
+    "should_trigger": false
+  },
+  {
+    "query": "帮我调 Chrome 启动参数：我要减少内存占用、关闭 GPU、指定 user-data-dir。先讲原理，不用写 DrissionPage 代码。",
+    "should_trigger": false
+  },
+  {
+    "query": "我的 Selenium 脚本在 CI 上 flaky，想先排查重试策略、测试隔离和等待机制，暂时不迁移到其他库。",
+    "should_trigger": false
+  },
+  {
+    "query": "请帮我比较 DrissionPage、Selenium、Playwright 的优缺点和适用场景，最后给技术选型建议。",
+    "should_trigger": false
+  },
+  {
+    "query": "需要做桌面自动化：点 Windows 客户端按钮、读取窗口文本、保存日志，不涉及浏览器页面。",
+    "should_trigger": false
+  }
+]
