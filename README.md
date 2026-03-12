@@ -2,7 +2,7 @@
 
 `usefulSkills` 是一个用于收集和维护 OpenCode/Claude 技能（skills）的仓库，面向「可复用、可落地」的任务能力沉淀。
 
-当前仓库已包含一个可直接使用的技能：`drissionpage-browser-control`，用于基于 DrissionPage 的浏览器自动化与控制。
+当前仓库已包含两个可直接使用的技能：`drissionpage-browser-control` 与 `ai_ssh_skill`。
 
 ## 仓库目标
 
@@ -14,6 +14,17 @@
 
 ```text
 .
+├─ ai_ssh_skill/
+│  ├─ SKILL.md
+│  └─ scripts/
+│     ├─ cli.py
+│     ├─ executor.py
+│     ├─ file_ops.py
+│     ├─ guard.py
+│     ├─ sftp_client.py
+│     ├─ shell.py
+│     ├─ ssh_client.py
+│     └─ sudo.py
 ├─ drissionpage-browser-control/
 │  ├─ SKILL.md
 │  ├─ references.md
@@ -29,6 +40,16 @@
 ```
 
 ## 已收录技能
+
+### ai_ssh_skill
+
+适用场景：
+
+- 通过 SSH 连接 Linux 服务器，执行远程命令。
+- 支持 sudo、SCP/SFTP 文件上传下载、系统信息采集。
+- 适合服务器运维、排障、批量命令执行场景。
+
+技能入口文件：`ai_ssh_skill/SKILL.md`
 
 ### drissionpage-browser-control
 

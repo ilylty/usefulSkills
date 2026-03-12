@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <title>ai-ssh 审计日志查看器</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --bg-elevated: #020617;
+            --border-subtle: #1e293b;
+            --accent: #38bdf8;
+            --accent-soft: rgba(56, 189, 248, 0.12);
+            --accent-strong: #0ea5e9;
+            --text: #e5e7eb;
+            --text-soft: #9ca3af;
+            --danger: #f97373;
+            --success: #4ade80;
+            --warning: #facc15;
+            --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            --radius-lg: 12px;
+            --radius-md: 8px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 16px;
+            background: radial-gradient(circle at top left, #1e293b 0, #020617 50%, #020617 100%);
+            color: var(--text);
+            font-family: var(--font-sans);
+            font-size: 14px;
+        }
+
+        h1 {
+            margin: 0 0 8px;
+            font-size: 20px;
+            letter-spacing: 0.03em;
+        }
+
+        .app-shell {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 8px;
+        }
+
+        .app-header-sub {
+            color: var(--text-soft);
+            font-size: 12px;
+        }
+
+        .app-main {
+            display: grid;
+            grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+            gap: 12px;
+            min-height: 480px;
+        }
+
+        @media (max-width: 900px) {
+            .app-main {
+                grid-template-columns: minmax(0, 1fr);
+            }
+        }
+
+        .card {
+            background: linear-gradient(145deg, rgba(15, 23, 42, 0.98), rgba(15, 23, 42, 0.92));
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-subtle);
+            box-shadow: 0 18px 40px rgba(15, 23, 42, 0.8);
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-title {
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            color: var(--text-soft);
+        }
+
+        .pill {
+            border-radius: 999px;
+            padding: 2px 10px;
+            font-size: 11px;
+            border: 1px solid var(--border-subtle);
+            color: var(--text-soft);
+        }
+
+        .pill-accent {
+            border-color: var(--accent-soft);
+            background: radial-gradient(circle at 0 0, rgba(56, 189, 248, 0.22), transparent 60%);
+            color: var(--accent-strong);
+        }
+
+        .upload-area {
+            border-radius: var(--radius-md);
+            border: 1px dashed rgba(148, 163, 184, 0.7);
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            background: radial-gradient(circle at top, rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0.9));
+            transition: border-color 0.15s ease, background-color 0.15s ease;
+        }
+
+        .upload-area.dragover {
+            border-color: var(--accent);
+            background: radial-gradient(circle at top, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.85));
+        }
+
+        .upload-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: var(--text-soft);
+        }
+
+        .upload-main {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .upload-hint {
+            font-size: 12px;
+            color: var(--text-soft);
+        }
+
+        .btn {
+            border-radius: 999px;
+            border: 1px solid var(--accent);
+            color: var(--accent-strong);
+            background: rgba(15, 23, 42, 0.8);
+            font-size: 12px;
+            padding: 4px 12px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.05s ease;
+        }
+
+        .btn:active {
+            transform: translateY(1px);
+        }
+
+        .btn-secondary {
+            border-color: var(--border-subtle);
+            color: var(--text-soft);
+        }
+
+        .btn-inline {
+            padding: 2px 8px;
+            font-size: 11px;
+        }
+
+        .stats-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            font-size: 11px;
+            color: var(--text-soft);
+        }
+
+        .stat-chip {
+            border-radius: 999px;
+            padding: 2px 10px;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid rgba(30, 64, 175, 0.8);
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .stat-chip strong {
+            color: var(--text);
+        }
+
+        .stat-chip.success {
+            border-color: rgba(34, 197, 94, 0.7);
+            color: var(--success);
+        }
+
+        .stat-chip.error {
+            border-color: rgba(248, 113, 113, 0.9);
+            color: var(--danger);
+        }
+
+        .stat-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 999px;
+        }
+
+        .stat-dot.success {
+            background: var(--success);
+        }
+
+        .stat-dot.error {
+            background: var(--danger);
+        }
+
+        .stat-dot.neutral {
+            background: var(--text-soft);
+        }
+
+        .filters-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 2px;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            color: var(--text-soft);
+        }
+
+        .filter-select,
+        .filter-input {
+            border-radius: 999px;
+            border: 1px solid var(--border-subtle);
+            background: rgba(15, 23, 42, 0.9);
+            color: var(--text);
+            padding: 3px 8px;
+            font-size: 11px;
+            min-width: 80px;
+        }
+
+        .filter-input {
+            min-width: 120px;
+        }
+
+        .filter-select:focus,
+        .filter-input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .table-wrapper {
+            border-radius: var(--radius-md);
+            border: 1px solid rgba(30, 64, 175, 0.7);
+            background: radial-gradient(circle at top, rgba(15, 23, 42, 0.97), rgba(15, 23, 42, 0.94));
+            overflow: hidden;
+            flex: 1 1 auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        thead {
+            background: rgba(15, 23, 42, 0.96);
+        }
+
+        th,
+        td {
+            padding: 6px 8px;
+            border-bottom: 1px solid rgba(30, 41, 59, 0.9);
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        th {
+            font-weight: 500;
+            color: var(--text-soft);
+            position: sticky;
+            top: 0;
+            backdrop-filter: blur(8px);
+            z-index: 1;
+        }
+
+        tbody {
+            display: block;
+            overflow: auto;
+            max-height: 380px;
+        }
+
+        thead tr,
+        tbody tr {
+            display: table;
+            width: 100%;
+            table-layout: fixed;
+        }
+
+        tr.entry-row {
+            cursor: pointer;
+            transition: background-color 0.1s ease;
+        }
+
+        tr.entry-row:hover {
+            background: rgba(30, 64, 175, 0.35);
+        }
+
+        tr.entry-row.active {
+            background: rgba(56, 189, 248, 0.15);
+        }
+
+        .cell-mono {
+            font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            font-size: 11px;
+        }
+
+        .tag {
+            border-radius: 999px;
+            padding: 1px 7px;
+            font-size: 10px;
+            border: 1px solid rgba(148, 163, 184, 0.7);
+            color: var(--text-soft);
+            background: rgba(15, 23, 42, 0.9);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .tag.success {
+            border-color: rgba(22, 163, 74, 0.9);
+            color: var(--success);
+        }
+
+        .tag.error {
+            border-color: rgba(248, 113, 113, 0.9);
+            color: var(--danger);
+        }
+
+        .tag.command {
+            border-color: rgba(56, 189, 248, 0.8);
+            color: var(--accent-strong);
+        }
+
+        .truncate {
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .detail-json {
+            flex: 1 1 auto;
+            border-radius: var(--radius-md);
+            border: 1px solid rgba(30, 64, 175, 0.7);
+            background: #020617;
+            padding: 8px;
+            font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            font-size: 11px;
+            color: #e5e7eb;
+            overflow: auto;
+            max-height: 430px;
+            white-space: pre;
+        }
+
+        .detail-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            color: var(--text-soft);
+        }
+
+        .detail-header-main {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .detail-title {
+            font-size: 12px;
+            color: var(--text);
+        }
+
+        .badge-small {
+            border-radius: 999px;
+            border: 1px solid rgba(148, 163, 184, 0.7);
+            padding: 1px 6px;
+            font-size: 10px;
+            color: var(--text-soft);
+        }
+
+        .empty-state {
+            font-size: 12px;
+            color: var(--text-soft);
+            padding: 4px 2px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-shell">
+        <header class="app-header">
+            <div>
+                <h1>ai-ssh 审计日志查看器</h1>
+                <div class="app-header-sub">离线 SPA · 上传 <code>.log</code> / <code>.jsonl</code>，解析 JSONL 行，查看每次 SSH
+                    操作详情。</div>
+            </div>
+        </header>
+
+        <div class="card">
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-header">
+                    <div>选择或拖拽 <code>ai_ssh_audit.log</code> 到这里</div>
+                    <span class="pill pill-accent" id="fileInfo">未加载日志</span>
+                </div>
+                <div class="upload-main">
+                    <div class="upload-hint">
+                        - 单文件、多行 JSON（JSONL）<br>
+                        - 浏览器本地解析，不会上传到任何服务器
+                    </div>
+                    <div>
+                        <button class="btn" id="fileButton">选择日志文件</button>
+                        <button class="btn btn-secondary btn-inline" id="clearButton" disabled>清空</button>
+                        <input type="file" id="fileInput" accept=".log,.jsonl,.txt,application/json"
+                            style="display:none">
+                    </div>
+                </div>
+            </div>
+
+            <div class="stats-row">
+                <span class="stat-chip">
+                    <span class="stat-dot neutral"></span>
+                    总记录：<strong id="statTotal">0</strong>
+                </span>
+                <span class="stat-chip success">
+                    <span class="stat-dot success"></span>
+                    成功：<strong id="statSuccess">0</strong>
+                </span>
+                <span class="stat-chip error">
+                    <span class="stat-dot error"></span>
+                    失败：<strong id="statFailed">0</strong>
+                </span>
+                <span class="stat-chip">
+                    类型：<strong id="statTypes">-</strong>
+                </span>
+                <span class="stat-chip">
+                    解析错误行：<strong id="statParseErrors">0</strong>
+                </span>
+            </div>
+
+            <div class="filters-row">
+                <div class="filter-group">
+                    <span>结果</span>
+                    <select id="filterOutcome" class="filter-select">
+                        <option value="all">全部</option>
+                        <option value="success">仅成功</option>
+                        <option value="failed">仅失败</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <span>类型</span>
+                    <select id="filterType" class="filter-select">
+                        <option value="all">全部</option>
+                        <option value="connect">connect</option>
+                        <option value="exec">exec</option>
+                        <option value="sudo">sudo</option>
+                        <option value="upload">upload</option>
+                        <option value="download">download</option>
+                        <option value="read">read</option>
+                        <option value="write">write</option>
+                        <option value="shell-run">shell-run</option>
+                        <option value="stat">stat</option>
+                        <option value="other">其他</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <span>Host 包含</span>
+                    <input id="filterHost" class="filter-input" placeholder="例如 8.148.29.241">
+                </div>
+                <div class="filter-group">
+                    <span>命令包含</span>
+                    <input id="filterCmd" class="filter-input" placeholder="例如 systemctl / df -h">
+                </div>
+            </div>
+        </div>
+
+        <main class="app-main">
+            <section class="card">
+                <div class="card-header">
+                    <div class="card-title">记录列表</div>
+                    <span class="pill" id="listInfo">0 条匹配</span>
+                </div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 130px;">时间</th>
+                                <th style="width: 80px;">类型</th>
+                                <th style="width: 120px;">Host</th>
+                                <th style="width: 90px;">用户</th>
+                                <th>命令 / 操作</th>
+                                <th style="width: 70px;">结果</th>
+                                <th style="width: 70px;">耗时(ms)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logTableBody">
+                            <tr>
+                                <td colspan="7" class="empty-state">请先上传 ai_ssh_audit.log</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="card">
+                <div class="card-header">
+                    <div class="card-title">详细信息</div>
+                </div>
+                <div class="detail-header-row" id="detailHeader">
+                    <div class="detail-header-main">
+                        <span class="detail-title" id="detailTitle">尚未选择记录</span>
+                        <span class="badge-small" id="detailMeta"></span>
+                    </div>
+                    <button class="btn btn-secondary btn-inline" id="copyJsonButton" disabled>复制 JSON</button>
+                </div>
+                <div class="detail-json" id="detailJson">
+                    选择左侧列表中的一条记录，在此查看完整 JSON。
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        (function () {
+            const fileInput = document.getElementById('fileInput');
+            const fileButton = document.getElementById('fileButton');
+            const clearButton = document.getElementById('clearButton');
+            const uploadArea = document.getElementById('uploadArea');
+            const fileInfo = document.getElementById('fileInfo');
+
+            const statTotal = document.getElementById('statTotal');
+            const statSuccess = document.getElementById('statSuccess');
+            const statFailed = document.getElementById('statFailed');
+            const statTypes = document.getElementById('statTypes');
+            const statParseErrors = document.getElementById('statParseErrors');
+            const listInfo = document.getElementById('listInfo');
+
+            const filterOutcome = document.getElementById('filterOutcome');
+            const filterType = document.getElementById('filterType');
+            const filterHost = document.getElementById('filterHost');
+            const filterCmd = document.getElementById('filterCmd');
+
+            const logTableBody = document.getElementById('logTableBody');
+            const detailJson = document.getElementById('detailJson');
+            const detailTitle = document.getElementById('detailTitle');
+            const detailMeta = document.getElementById('detailMeta');
+            const copyJsonButton = document.getElementById('copyJsonButton');
+
+            let allEntries = [];
+            let filteredEntries = [];
+            let parseErrorLines = 0;
+            let activeIndex = null;
+
+            function resetState() {
+                allEntries = [];
+                filteredEntries = [];
+                parseErrorLines = 0;
+                activeIndex = null;
+
+                statTotal.textContent = '0';
+                statSuccess.textContent = '0';
+                statFailed.textContent = '0';
+                statTypes.textContent = '-';
+                statParseErrors.textContent = '0';
+                listInfo.textContent = '0 条匹配';
+
+                detailTitle.textContent = '尚未选择记录';
+                detailMeta.textContent = '';
+                detailJson.textContent = '选择左侧列表中的一条记录，在此查看完整 JSON。';
+                copyJsonButton.disabled = true;
+
+                logTableBody.innerHTML = '<tr><td colspan="7" class="empty-state">请先上传 ai_ssh_audit.log</td></tr>';
+                fileInfo.textContent = '未加载日志';
+                clearButton.disabled = true;
+            }
+
+            function deriveField(obj, fallback) {
+                return obj !== undefined && obj !== null ? obj : fallback;
+            }
+
+            function extractEntryMetadata(raw, index) {
+                const e = { raw, index };
+
+                // 时间
+                const ts = raw.timestamp || raw.time || raw.ts;
+                if (ts) {
+                    try {
+                        const date = new Date(ts);
+                        if (!isNaN(date.getTime())) {
+                            e.timeRaw = date;
+                            e.timeDisplay = date.toISOString().replace('T', ' ').slice(0, 19);
+                        } else if (typeof ts === 'number') {
+                            const d2 = new Date(ts);
+                            e.timeRaw = d2;
+                            e.timeDisplay = d2.toISOString().replace('T', ' ').slice(0, 19);
+                        } else {
+                            e.timeDisplay = String(ts);
+                        }
+                    } catch {
+                        e.timeDisplay = String(ts);
+                    }
+                } else {
+                    e.timeDisplay = '';
+                }
+
+                // 类型 / 子命令
+                const sub = raw.subcommand || raw.action || raw.type || raw.command_type;
+                e.type = sub ? String(sub) : 'unknown';
+                const normType = e.type.toLowerCase();
+                if (['connect', 'exec', 'sudo', 'upload', 'download', 'read', 'write', 'shell-run', 'shell', 'stat'].includes(normType)) {
+                    e.typeNormalized = normType === 'shell' ? 'shell-run' : normType;
+                } else {
+                    e.typeNormalized = 'other';
+                }
+
+                // host
+                e.host = deriveField(raw.host, '');
+
+                // user
+                let user = raw.user || raw.username;
+                if (!user && raw.ssh && (raw.ssh.user || raw.ssh.username)) {
+                    user = raw.ssh.user || raw.ssh.username;
+                }
+                e.user = deriveField(user, '');
+
+                // 命令 / 操作描述
+                const cmd = raw.command || raw.cmd || raw.exec || (raw.request && raw.request.command);
+                if (cmd) {
+                    e.command = String(cmd);
+                } else if (e.typeNormalized === 'connect') {
+                    e.command = 'connect';
+                } else if (e.typeNormalized === 'upload') {
+                    e.command = 'upload ' + (raw.remote || '');
+                } else if (e.typeNormalized === 'download') {
+                    e.command = 'download ' + (raw.remote || '');
+                } else if (e.typeNormalized === 'read') {
+                    e.command = 'read ' + (raw.path || '');
+                } else if (e.typeNormalized === 'write') {
+                    e.command = 'write ' + (raw.path || '');
+                } else if (e.typeNormalized === 'stat') {
+                    e.command = 'stat';
+                } else {
+                    e.command = '';
+                }
+
+                // 结果成功/失败
+                if (typeof raw.success === 'boolean') {
+                    e.success = raw.success;
+                } else if (typeof raw.exit_code === 'number') {
+                    e.success = raw.exit_code === 0;
+                } else {
+                    e.success = null;
+                }
+
+                // 耗时
+                if (typeof raw.duration_ms === 'number') {
+                    e.duration = raw.duration_ms;
+                } else if (typeof raw.durationMs === 'number') {
+                    e.duration = raw.durationMs;
+                } else {
+                    e.duration = null;
+                }
+
+                return e;
+            }
+
+            function updateStats() {
+                statTotal.textContent = String(allEntries.length);
+                const successCount = allEntries.filter(e => e.success === true).length;
+                const failCount = allEntries.filter(e => e.success === false).length;
+                statSuccess.textContent = String(successCount);
+                statFailed.textContent = String(failCount);
+                statParseErrors.textContent = String(parseErrorLines);
+
+                const typeCounts = {};
+                allEntries.forEach(e => {
+                    const t = e.typeNormalized || 'other';
+                    typeCounts[t] = (typeCounts[t] || 0) + 1;
+                });
+                const entries = Object.entries(typeCounts)
+                    .sort((a, b) => b[1] - a[1])
+                    .map(([t, c]) => `${t}:${c}`);
+                statTypes.textContent = entries.length ? entries.join(', ') : '-';
+            }
+
+            function applyFilters() {
+                const outcome = filterOutcome.value;
+                const type = filterType.value;
+                const hostTerm = filterHost.value.trim().toLowerCase();
+                const cmdTerm = filterCmd.value.trim().toLowerCase();
+
+                filteredEntries = allEntries.filter(e => {
+                    if (outcome === 'success' && e.success !== true) return false;
+                    if (outcome === 'failed' && e.success !== false) return false;
+                    if (type !== 'all') {
+                        if (type === 'other') {
+                            if (e.typeNormalized !== 'other') return false;
+                        } else if (e.typeNormalized !== type) {
+                            return false;
+                        }
+                    }
+                    if (hostTerm && (!e.host || String(e.host).toLowerCase().indexOf(hostTerm) === -1)) {
+                        return false;
+                    }
+                    if (cmdTerm && (!e.command || e.command.toLowerCase().indexOf(cmdTerm) === -1)) {
+                        return false;
+                    }
+                    return true;
+                });
+
+                listInfo.textContent = `${filteredEntries.length} 条匹配`;
+                renderTable();
+            }
+
+            function renderTable() {
+                if (!filteredEntries.length) {
+                    logTableBody.innerHTML = '<tr><td colspan="7" class="empty-state">没有匹配记录，试试放宽筛选条件。</td></tr>';
+                    return;
+                }
+
+                const rows = filteredEntries.map(e => {
+                    const successTag = e.success === true
+                        ? '<span class="tag success">OK</span>'
+                        : e.success === false
+                            ? '<span class="tag error">FAIL</span>'
+                            : '<span class="tag">N/A</span>';
+
+                    const typeLabel = e.type || 'unknown';
+                    const typeTag = `<span class="tag command">${escapeHtml(typeLabel)}</span>`;
+
+                    const duration = e.duration != null ? e.duration : '';
+
+                    const activeClass = (activeIndex === e.index) ? ' active' : '';
+                    const cmdShort = e.command || '';
+
+                    return `<tr class="entry-row${activeClass}" data-index="${e.index}">
+          <td class="cell-mono truncate" title="${escapeHtml(e.timeDisplay || '')}">${escapeHtml(e.timeDisplay || '')}</td>
+          <td>${typeTag}</td>
+          <td class="cell-mono truncate" title="${escapeHtml(e.host || '')}">${escapeHtml(e.host || '')}</td>
+          <td class="cell-mono truncate" title="${escapeHtml(e.user || '')}">${escapeHtml(e.user || '')}</td>
+          <td class="cell-mono truncate" title="${escapeHtml(cmdShort)}">${escapeHtml(cmdShort)}</td>
+          <td>${successTag}</td>
+          <td class="cell-mono" style="text-align:right">${duration !== '' ? duration : ''}</td>
+        </tr>`;
+                });
+
+                logTableBody.innerHTML = rows.join('');
+
+                // 添加点击事件
+                Array.from(logTableBody.querySelectorAll('tr.entry-row')).forEach(row => {
+                    row.addEventListener('click', () => {
+                        const idx = parseInt(row.getAttribute('data-index'), 10);
+                        selectEntry(idx);
+                    });
+                });
+            }
+
+            function selectEntry(index) {
+                const entry = allEntries.find(e => e.index === index);
+                if (!entry) return;
+
+                activeIndex = index;
+                // 更新行高亮
+                Array.from(logTableBody.querySelectorAll('tr.entry-row')).forEach(row => {
+                    const idx = parseInt(row.getAttribute('data-index'), 10);
+                    if (idx === index) {
+                        row.classList.add('active');
+                    } else {
+                        row.classList.remove('active');
+                    }
+                });
+
+                const raw = entry.raw;
+                detailTitle.textContent = `${entry.type || 'unknown'} @ ${entry.host || '-'}`;
+                const metaPieces = [];
+                if (entry.timeDisplay) metaPieces.push(`时间: ${entry.timeDisplay}`);
+                if (entry.user) metaPieces.push(`用户: ${entry.user}`);
+                if (entry.success === true) metaPieces.push('结果: success');
+                if (entry.success === false) metaPieces.push('结果: failed');
+                if (entry.duration != null) metaPieces.push(`耗时: ${entry.duration} ms`);
+                detailMeta.textContent = metaPieces.join(' · ');
+
+                detailJson.textContent = JSON.stringify(raw, null, 2);
+                copyJsonButton.disabled = false;
+            }
+
+            function escapeHtml(str) {
+                return String(str)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;');
+            }
+
+            function handleFile(file) {
+                resetState();
+                if (!file) return;
+
+                fileInfo.textContent = `已加载：${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+                clearButton.disabled = false;
+
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const text = e.target.result || '';
+                    const lines = text.split(/\r?\n/);
+                    const entries = [];
+                    parseErrorLines = 0;
+
+                    lines.forEach((line, idx) => {
+                        const trimmed = line.trim();
+                        if (!trimmed) return;
+                        try {
+                            const obj = JSON.parse(trimmed);
+                            entries.push(extractEntryMetadata(obj, entries.length));
+                        } catch {
+                            parseErrorLines += 1;
+                        }
+                    });
+
+                    allEntries = entries;
+                    updateStats();
+                    applyFilters();
+                };
+                reader.onerror = function () {
+                    fileInfo.textContent = '读取文件失败';
+                };
+                reader.readAsText(file);
+            }
+
+            // 事件绑定：文件选择
+            fileButton.addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                handleFile(file);
+            });
+
+            clearButton.addEventListener('click', () => {
+                fileInput.value = '';
+                resetState();
+            });
+
+            // 拖拽上传
+            ['dragenter', 'dragover'].forEach(ev => {
+                uploadArea.addEventListener(ev, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    uploadArea.classList.add('dragover');
+                });
+            });
+
+            ['dragleave', 'drop'].forEach(ev => {
+                uploadArea.addEventListener(ev, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (ev === 'drop') {
+                        const dt = e.dataTransfer;
+                        if (dt && dt.files && dt.files[0]) {
+                            handleFile(dt.files[0]);
+                        }
+                    }
+                    uploadArea.classList.remove('dragover');
+                });
+            });
+
+            // 筛选事件
+            [filterOutcome, filterType].forEach(el => {
+                el.addEventListener('change', applyFilters);
+            });
+            [filterHost, filterCmd].forEach(el => {
+                el.addEventListener('input', () => {
+                    // 简单防抖：小延迟
+                    if (el._debounce) clearTimeout(el._debounce);
+                    el._debounce = setTimeout(applyFilters, 150);
+                });
+            });
+
+            // 复制 JSON 按钮
+            copyJsonButton.addEventListener('click', async () => {
+                if (activeIndex == null) return;
+                const entry = allEntries.find(e => e.index === activeIndex);
+                if (!entry) return;
+                const text = JSON.stringify(entry.raw, null, 2);
+                try {
+                    await navigator.clipboard.writeText(text);
+                    copyJsonButton.textContent = '已复制';
+                    setTimeout(() => { copyJsonButton.textContent = '复制 JSON'; }, 1200);
+                } catch {
+                    // 复制失败就不额外提示了
+                }
+            });
+
+            // 初始化
+            resetState();
+        })();
+    </script>
+</body>
+
+</html>
