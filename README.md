@@ -20,11 +20,17 @@
 │     ├─ cli.py
 │     ├─ executor.py
 │     ├─ file_ops.py
+│     ├─ jobs.py
 │     ├─ guard.py
+│     ├─ net_watch.py
+│     ├─ output_capture.py
+│     ├─ proc_watch.py
 │     ├─ sftp_client.py
 │     ├─ shell.py
 │     ├─ ssh_client.py
-│     └─ sudo.py
+│     ├─ sudo.py
+│     ├─ systemd.py
+│     └─ tmux_shell.py
 ├─ drissionpage-browser-control/
 │  ├─ SKILL.md
 │  ├─ references.md
@@ -48,6 +54,16 @@
 - 通过 SSH 连接 Linux 服务器，执行远程命令。
 - 支持 sudo、SCP/SFTP 文件上传下载、系统信息采集。
 - 适合服务器运维、排障、批量命令执行场景。
+
+新增能力（2026-03-12 更新）：
+
+- systemd 服务观测：`service-watch` / `service-fail-summary`
+- 长任务连续性：`job-run` / `job-status`
+- 可观测性：`net-watch` / `proc-watch`
+- 配置写入：`write-json`（写前校验 JSON）
+- 文件原语：`file-exists` / `file-ls` / `file-mkdir` / `file-mv` / `file-rm` / `file-cp`
+- 持久 shell：`shell-open` / `shell-send` / `shell-close`（tmux 后端）
+- 通用输出落盘：`--output-file`（避免长输出被截断）
 
 技能入口文件：`ai_ssh_skill/SKILL.md`
 

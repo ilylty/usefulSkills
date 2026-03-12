@@ -41,8 +41,11 @@ class ShellSession:
 
         # Drain initial banner/prompt with a small delay window
         time_limit = time.monotonic() + 2.0
-        while time.monotonic() < time_limit and channel.recv_ready():
-            channel.recv(4096)
+        while time.monotonic() < time_limit:
+            if channel.recv_ready():
+                channel.recv(4096)
+                continue
+            time.sleep(0.05)
 
     def close(self) -> None:
         try:
@@ -201,7 +204,14 @@ class ShellSession:
         """
 
         marker = f"__AI_DONE__{uuid.uuid4().hex}__"
-        wrapped = f"{command}\nprintf '\n{marker}%s\n' $?\n"
+        # Reduce noisy terminal features in captured output.
+        # - Disable bracketed paste mode where supported.
+        # - Keep marker printing simple and deterministic.
+        wrapped = (
+            "printf '\\e[?2004l' 2>/dev/null || true\n"
+            + f"{command}\n"
+            + f"printf '\n{marker}%s\n' $?\n"
+        )
 
         self._channel.send(wrapped)
 
@@ -209,6 +219,7 @@ class ShellSession:
         started = time.monotonic()
         exit_code: Optional[int] = None
         timed_out = False
+        reason: Optional[str] = None
         password_sent = False
 
         marker_re = re.compile(re.escape(marker) + r"(\d+)")
@@ -237,6 +248,7 @@ class ShellSession:
 
             if time.monotonic() - started > timeout:
                 timed_out = True
+                reason = "timeout"
                 break
 
             time.sleep(0.05)
@@ -247,6 +259,13 @@ class ShellSession:
         cleaned = marker_re.sub("", buffer)
 
         success = bool(exit_code == 0 and not timed_out)
+
+        if exit_code is None and reason is None:
+            reason = (
+                "channel_closed"
+                if (self._channel.closed or self._channel.exit_status_ready())
+                else "unknown"
+            )
 
         # PTY 模式下 stdout/stderr 实际混在一起，这里约定：
         # - 正常成功时，把全部输出放在 stdout，stderr 为空；
@@ -262,5 +281,6 @@ class ShellSession:
             "exit_code": exit_code,
             "timed_out": timed_out,
             "interrupted": False,
+            "reason": reason,
             "duration_ms": duration_ms,
         }

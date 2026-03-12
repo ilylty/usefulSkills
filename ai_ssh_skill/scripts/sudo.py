@@ -20,6 +20,8 @@ def run_sudo_command(
 
     wrapped = f"sudo -S -p '' {command}"
     started = time.monotonic()
+    timed_out = False
+    reason: Optional[str] = None
 
     try:
         stdin, stdout, stderr = client.exec_command(
@@ -46,20 +48,33 @@ def run_sudo_command(
             "exit_code": None,
             "timed_out": False,
             "interrupted": False,
+            "reason": "ssh_error",
             "duration_ms": duration_ms,
+            "command": command,
         }
+    except TimeoutError:
+        timed_out = True
+        reason = "timeout"
+        exit_code = None
+        out_data = b""
+        err_data = b"Timed out while waiting for command output"
 
     duration_ms = int((time.monotonic() - started) * 1000)
     stdout_text = out_data.decode("utf-8", errors="replace") if out_data else ""
     stderr_text = err_data.decode("utf-8", errors="replace") if err_data else ""
-    success = bool(exit_code == 0)
+    success = bool(exit_code == 0 and not timed_out)
+
+    if exit_code is None and reason is None:
+        reason = "timeout" if timed_out else "unknown"
 
     return {
         "success": success,
         "stdout": stdout_text,
         "stderr": stderr_text,
         "exit_code": exit_code,
-        "timed_out": False,
+        "timed_out": timed_out,
         "interrupted": False,
+        "reason": reason,
         "duration_ms": duration_ms,
+        "command": command,
     }

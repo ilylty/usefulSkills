@@ -27,6 +27,16 @@ The CLI is built on Paramiko and exposes high-level subcommands that:
 - Run PTY-based commands using an interactive shell with markers (`shell-run`)
 - Collect basic system information (`stat`)
 
+Additional capabilities:
+
+- Watch systemd services (`service-watch`, `service-fail-summary`)
+- Run long commands as background jobs (`job-run`, `job-status`)
+- Observe network throughput (`net-watch`)
+- Watch process churn (`proc-watch`)
+- Validate and write JSON configs (`write-json`)
+- Basic remote file operations (`file-exists`, `file-ls`, `file-mkdir`, `file-mv`, `file-rm`, `file-cp`)
+- Persistent shell sessions via tmux (`shell-open`, `shell-send`, `shell-close`)
+
 All subcommands return structured JSON, which you should parse to decide
 follow-up actions.
 
@@ -381,3 +391,91 @@ Summarize key points (OS, kernel, uptime, disk usage) for the user.
 The CLI writes a JSONL audit log to `ai_ssh_audit.log` (or the path specified
 by `AI_SSH_AUDIT_LOG`). You usually do not need to inspect this file, but you
 should remember that all actions are recorded for traceability.
+
+
+# New Subcommands
+
+## service-fail-summary — Root-cause snapshot for a systemd unit
+
+Example:
+
+```bash
+python cli.py service-fail-summary --host <ip> --user <user> --password <pwd> --unit cron.service --tail-lines 20
+```
+
+Returns fields like:
+
+- `restart_count`, `last_exit_code`, `tail[]`, `hint`
+
+
+## service-watch — Detect restart loops (flapping)
+
+Example:
+
+```bash
+python cli.py service-watch --host <ip> --user <user> --password <pwd> --unit myapp.service --duration 60 --interval 2
+```
+
+Returns `status: stable|flapping`, `pids_seen[]`, restart count deltas.
+
+
+## job-run / job-status — Long task continuity
+
+Example:
+
+```bash
+python cli.py job-run --host <ip> --user <user> --password <pwd> --cmd "git clone ..." --log /tmp/clone.log --exit-file /tmp/clone.exit
+python cli.py job-status --host <ip> --user <user> --password <pwd> --job-id <job_id>
+```
+
+
+## net-watch — Download activity heuristic
+
+Example:
+
+```bash
+python cli.py net-watch --host <ip> --user <user> --password <pwd> --iface auto --duration 60 --interval 1 --threshold-kbps 200
+```
+
+
+## proc-watch — PID churn for new processes in a window
+
+Example:
+
+```bash
+python cli.py proc-watch --host <ip> --user <user> --password <pwd> --pattern java --duration 60 --interval 1 --min-lifetime-ms 200
+```
+
+
+## write-json — Write + validate in one step
+
+Example:
+
+```bash
+python cli.py write-json --host <ip> --user <user> --password <pwd> --path /opt/app/config.json --content @./config.json --backup
+```
+
+
+## file-* — Basic remote file ops
+
+Examples:
+
+```bash
+python cli.py file-exists --host <ip> --user <user> --password <pwd> --path /etc/os-release
+python cli.py file-ls --host <ip> --user <user> --password <pwd> --path /tmp --all --long
+python cli.py file-mkdir --host <ip> --user <user> --password <pwd> --path /tmp/mydir --parents
+python cli.py file-cp --host <ip> --user <user> --password <pwd> --src /tmp/a --dst /tmp/b --recursive
+python cli.py file-mv --host <ip> --user <user> --password <pwd> --src /tmp/a --dst /tmp/a2 --overwrite
+python cli.py file-rm --host <ip> --user <user> --password <pwd> --path /tmp/mydir --recursive --force
+```
+
+
+## shell-open / shell-send / shell-close — Persistent shell via tmux
+
+Example:
+
+```bash
+python cli.py shell-open --host <ip> --user <user> --password <pwd> --session sh-001 --cwd /tmp
+python cli.py shell-send --host <ip> --user <user> --password <pwd> --session sh-001 --cmd "pwd"
+python cli.py shell-close --host <ip> --user <user> --password <pwd> --session sh-001
+```
